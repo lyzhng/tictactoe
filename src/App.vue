@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="has-background-black">
     <TicTacToeBoard />
   </div>
 </template>
@@ -9,12 +9,6 @@ import TicTacToeBoard from './components/TicTacToeBoard';
 
 export default {
   name: 'App',
-  data() {
-    return {
-      msg: 'Message over here'
-    };
-  },
-  methods: {},
   components: {
     TicTacToeBoard
   }
@@ -23,7 +17,7 @@ export default {
 
 <style>
 #app {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
