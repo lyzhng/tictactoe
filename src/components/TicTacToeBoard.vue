@@ -170,8 +170,15 @@ export default {
 .button {
   margin: 0 0.5rem;
 }
+table {
+  width: 400px;
+  table-layout: fixed;
+}
 td {
-  padding: 3rem;
+  padding: 3.5rem;
   border: 2px solid;
+}
+td::after {
+  content: '\00A0';
 }
 </style>
