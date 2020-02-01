@@ -18,18 +18,16 @@
       </tbody>
     </table>
     <div class="button-container">
-      <b-button
-        type="button"
-        @click="undoMove"
-        :disabled="isEmptyMoveHistory || isFinished"
-      >Undo Move</b-button>
-      <b-button type="button" @click="reset">Reset</b-button>
+      <b-button @click="undo" :disabled="isEmptyMoveHistory || isFinished">Undo</b-button>
+      <b-button @click="redo" :disabled="isEmptyUndoHistory">Redo</b-button>
+      <b-button @click="reset">Reset</b-button>
     </div>
   </div>
 </template>
 
 <script>
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'TicTacToeBoard',
@@ -41,8 +39,6 @@ export default {
         ['', '', '']
       ],
       currentMove: 'X',
-      errorMsg: '',
-      showErrorMsg: false,
       isFinished: false,
       isDraw: false
     };
@@ -51,33 +47,46 @@ export default {
     toggledMove() {
       return this.currentMove === 'X' ? 'O' : 'X';
     },
-    isEmptyMoveHistory() {
-      return this.$store.state.moveHistory.length === 0;
-    }
+    ...mapGetters([
+      'isEmptyMoveHistory',
+      'isEmptyUndoHistory',
+      'lastMove',
+      'lastUndoMove'
+    ])
   },
   methods: {
     reset() {
-      this.$store.commit({
-        type: 'reset'
-      });
-      for (let i = 0; i < this.grid.length; i++) {
-        for (let j = 0; j < this.grid[i].length; j++) {
+      this.$store.dispatch('reset');
+      for (let i = 0; i < this.grid.length; i++)
+        for (let j = 0; j < this.grid[i].length; j++)
           Vue.set(this.grid[i], j, '');
-        }
-      }
       this.currentMove = 'X';
       this.isFinished = this.isDraw = false;
     },
-    undoMove() {
-      const { currentMove, row, tile } = this.$store.getters.lastMove.info;
-      if (this.$store.getters.lastMove.info === null) return;
+    redo() {
+      if (!this.lastUndoMove) return;
+      const { currentMove, row, tile } = this.lastUndoMove.info;
+      Vue.set(this.grid[row], tile, currentMove);
+      this.toggleCurrentMove();
+      this.$store.commit({
+        type: 'addToMoveHistory',
+        info: { currentMove, row, tile }
+      });
+      this.$store.commit('removeFromUndoHistory');
+    },
+    undo() {
+      if (!this.lastMove) return;
+      const { currentMove, row, tile } = this.lastMove.info;
       Vue.set(this.grid[row], tile, '');
       this.currentMove = currentMove;
+      this.$store.commit('removeFromMoveHistory');
       this.$store.commit({
-        type: 'removeFromMoveHistory'
+        type: 'addToUndoHistory',
+        info: { currentMove, row, tile }
       });
     },
     plot(row, tile) {
+      if (this.lastUndoMove) this.$store.commit('deleteUndoHistory');
       if (this.isEmptyTile(row, tile)) {
         Vue.set(this.grid[row], tile, this.currentMove);
         this.$store.commit({
@@ -91,9 +100,6 @@ export default {
         this.toggleCurrentMove();
         this.isFinished = this.isWinningMove(row, tile) || this.isFullBoard();
         this.isDraw = this.isFullBoard();
-      } else {
-        this.errorMsg = 'Error! Invalid move.';
-        this.showErrorMsg = true;
       }
     },
     toggleCurrentMove() {
