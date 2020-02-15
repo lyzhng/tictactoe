@@ -179,6 +179,7 @@ export default {
 table {
   width: 400px;
   table-layout: fixed;
+  font-size: 1.5em;
 }
 td {
   padding: 3.5rem;
